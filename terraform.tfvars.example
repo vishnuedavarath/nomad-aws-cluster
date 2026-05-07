@@ -1,0 +1,7 @@
+region               = "us-east-1"
+project_name         = "nomad-cluster"
+server_instance_type = "t3.small"
+client_instance_type = "t3.medium"
+client_count         = 2
+client_min           = 1
+client_max           = 5
