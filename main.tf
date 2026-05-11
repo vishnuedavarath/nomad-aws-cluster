@@ -67,6 +67,7 @@ module "scaling_policies" {
 
 locals {
   nomad_management_token_param = "${var.nomad_token_ssm_prefix}/management-token"
+  nomad_admin_token_param      = "${var.nomad_token_ssm_prefix}/admin-token"
   nomad_operator_token_param   = "${var.nomad_token_ssm_prefix}/operator-token"
   nomad_autoscaler_token_param = "${var.nomad_token_ssm_prefix}/autoscaler-token"
 }
@@ -108,6 +109,21 @@ resource "aws_ssm_parameter" "nomad_autoscaler_token" {
 
   tags = {
     Name    = "${var.project_name}-nomad-autoscaler-token"
+    Project = var.project_name
+  }
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "aws_ssm_parameter" "nomad_admin_token" {
+  name  = local.nomad_admin_token_param
+  type  = "SecureString"
+  value = "bootstrap-pending"
+
+  tags = {
+    Name    = "${var.project_name}-nomad-admin-token"
     Project = var.project_name
   }
 

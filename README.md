@@ -206,7 +206,7 @@ The Nomad Autoscaler monitors cluster CPU/memory allocation and scales the clien
 - **No SSH ports open** — access via AWS SSM Session Manager only
 - **IMDSv2 enforced** — instance metadata requires session tokens
 - **EBS encrypted** — all volumes use gp3 with encryption
-- **ACL enabled** — three scoped tokens (management, operator, autoscaler)
+- **ACL enabled** — four scoped tokens (management, admin, operator, autoscaler)
 - **Least-privilege IAM** — separate roles per component
 - **Security groups** — Nomad ports restricted to VPC CIDR only
 - **Spot instances** — clients use mixed instance policy (capacity-optimized)
@@ -217,8 +217,9 @@ The Nomad Autoscaler monitors cluster CPU/memory allocation and scales the clien
 
 | Parameter | Purpose |
 |-----------|---------|
-| `/nomad-cluster/acl/management-token` | Full admin access (use sparingly) |
-| `/nomad-cluster/acl/operator-token` | Day-to-day job management |
+| `/nomad-cluster/acl/management-token` | Bootstrap token (use only for initial setup) |
+| `/nomad-cluster/acl/admin-token` | Full admin access — equivalent to bootstrap token |
+| `/nomad-cluster/acl/operator-token` | Day-to-day job and node management |
 | `/nomad-cluster/acl/autoscaler-token` | Autoscaler read + scale permissions |
 
 ## Destroying

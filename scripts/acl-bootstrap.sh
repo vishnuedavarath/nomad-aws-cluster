@@ -94,6 +94,15 @@ echo "$AUTOSCALER_OUTPUT"
 AUTOSCALER_TOKEN=$(echo "$AUTOSCALER_OUTPUT" | grep "Secret ID" | awk '{print $4}')
 
 echo ""
+echo "==> Creating admin token (management type - full bootstrap-equivalent powers)..."
+ADMIN_OUTPUT=$(nomad acl token create \
+  -name="admin" \
+  -type=management)
+
+echo "$ADMIN_OUTPUT"
+ADMIN_TOKEN=$(echo "$ADMIN_OUTPUT" | grep "Secret ID" | awk '{print $4}')
+
+echo ""
 echo "==> Storing tokens in AWS SSM Parameter Store..."
 aws ssm put-parameter \
   --region "$AWS_REGION" \
@@ -114,6 +123,13 @@ aws ssm put-parameter \
   --name "$SSM_PREFIX/autoscaler-token" \
   --type "SecureString" \
   --value "$AUTOSCALER_TOKEN" \
+  --overwrite >/dev/null
+
+aws ssm put-parameter \
+  --region "$AWS_REGION" \
+  --name "$SSM_PREFIX/admin-token" \
+  --type "SecureString" \
+  --value "$ADMIN_TOKEN" \
   --overwrite >/dev/null
 
 echo ""

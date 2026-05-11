@@ -14,6 +14,10 @@ output "nomad_management_token_ssm_parameter" {
   value = aws_ssm_parameter.nomad_management_token.name
 }
 
+output "nomad_admin_token_ssm_parameter" {
+  value = aws_ssm_parameter.nomad_admin_token.name
+}
+
 output "nomad_operator_token_ssm_parameter" {
   value = aws_ssm_parameter.nomad_operator_token.name
 }
