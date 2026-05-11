@@ -3,6 +3,11 @@ variable "autoscaler_binary_url" {
   description = "S3 URL to the Nomad Autoscaler zip. Provided automatically by deploy-autoscaler.sh from terraform output."
 }
 
+variable "scaling_policies_url" {
+  type        = string
+  description = "S3 URL to the scaling policies zip."
+}
+
 job "autoscaler" {
   datacenters = ["dc1"]
   type        = "service"
@@ -40,6 +45,12 @@ job "autoscaler" {
         destination = "${NOMAD_TASK_DIR}/"
       }
 
+      # Scaling policies from S3 (managed by Terraform)
+      artifact {
+        source      = var.scaling_policies_url
+        destination = "${NOMAD_TASK_DIR}/policies/"
+      }
+
       # Autoscaler agent config
       template {
         data        = <<-EOF
@@ -68,50 +79,6 @@ job "autoscaler" {
           }
         EOF
         destination = "${NOMAD_TASK_DIR}/config.hcl"
-      }
-
-      # Cluster scaling policy - scales the client ASG based on resource allocation
-      template {
-        data        = <<-EOF
-          scaling "cluster_policy" {
-            enabled = true
-            min     = {{ with nomadVar "nomad/jobs/autoscaler" }}{{ .client_min }}{{ end }}
-            max     = {{ with nomadVar "nomad/jobs/autoscaler" }}{{ .client_max }}{{ end }}
-
-            policy {
-              cooldown            = "2m"
-              evaluation_interval = "30s"
-
-              check "cpu_allocated_percentage" {
-                source = "nomad-apm"
-                query  = "percentage-allocated_cpu"
-                query_window = "1m"
-
-                strategy "target-value" {
-                  target = 70
-                }
-              }
-
-              check "mem_allocated_percentage" {
-                source = "nomad-apm"
-                query  = "percentage-allocated_memory"
-                query_window = "1m"
-
-                strategy "target-value" {
-                  target = 70
-                }
-              }
-
-              target "aws-asg" {
-                dry-run             = "false"
-                aws_asg_name        = "{{ with nomadVar "nomad/jobs/autoscaler" }}{{ .client_asg_name }}{{ end }}"
-                node_class          = "hashistack"
-                node_drain_deadline = "5m"
-              }
-            }
-          }
-        EOF
-        destination = "${NOMAD_TASK_DIR}/policies/policy.hcl"
       }
 
       resources {

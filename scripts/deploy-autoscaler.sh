@@ -28,12 +28,25 @@ nomad var put -force nomad/jobs/autoscaler \
 
 echo "==> Deploying autoscaler job..."
 BINARY_URL=$(cd "$REPO_ROOT" && terraform output -raw autoscaler_binary_url 2>/dev/null || echo "")
-if [[ -n "$BINARY_URL" ]]; then
-  nomad job run -var="autoscaler_binary_url=${BINARY_URL}" "$REPO_ROOT/nomad-jobs/autoscaler.nomad.hcl"
-else
+POLICIES_URL=$(cd "$REPO_ROOT" && terraform output -raw scaling_policies_url 2>/dev/null || echo "")
+
+if [[ -z "$BINARY_URL" ]]; then
   echo "ERROR: Could not get S3 URL from terraform output. Run 'terraform apply' first."
   exit 1
 fi
+
+if [[ -z "$POLICIES_URL" ]]; then
+  echo "ERROR: Could not get scaling policies URL from terraform output. Run 'terraform apply' first."
+  exit 1
+fi
+
+nomad job run \
+  -var="autoscaler_binary_url=${BINARY_URL}" \
+  -var="scaling_policies_url=${POLICIES_URL}" \
+  "$REPO_ROOT/nomad-jobs/autoscaler.nomad.hcl"
+
+echo "==> Restarting autoscaler to pick up latest policies..."
+nomad job restart autoscaler 2>/dev/null || true
 
 echo "==> Autoscaler deployed. Check status with:"
 echo "    nomad job status autoscaler"

@@ -90,7 +90,39 @@ export NOMAD_TOKEN=$(aws ssm get-parameter --region us-east-1 \
   --with-decryption --query Parameter.Value --output text)
 ```
 
-### 7. Deploy autoscaler
+### 7. Upload autoscaler binary artifact
+
+The autoscaler job downloads its binary from S3. Upload it first:
+
+```bash
+./scripts/upload-autoscaler.sh
+```
+
+Optional:
+
+```bash
+# Use a local build
+./scripts/upload-autoscaler.sh --local
+
+# Or provide an explicit binary path
+./scripts/upload-autoscaler.sh /path/to/nomad-autoscaler
+```
+
+### 8. Configure scaling policies and publish changes
+
+Scaling policies live in the `scaling-policies/` directory.
+
+```bash
+# Example: edit baseline policy
+$EDITOR scaling-policies/cluster.hcl
+
+# Publish policy changes (zips directory and uploads to S3)
+terraform apply
+```
+
+Any new or changed `.hcl` file in `scaling-policies/` is included automatically.
+
+### 9. Deploy autoscaler
 
 ```bash
 export NOMAD_TOKEN=$(aws ssm get-parameter --region us-east-1 \
@@ -102,6 +134,21 @@ AUTOSCALER_TOKEN=$(aws ssm get-parameter --region us-east-1 \
   --with-decryption --query Parameter.Value --output text)
 
 ./scripts/deploy-autoscaler.sh "$AUTOSCALER_TOKEN" us-east-1 nomad-cluster-client-asg 1 5
+```
+
+If you update policies later:
+
+```bash
+terraform apply
+./scripts/deploy-autoscaler.sh "$AUTOSCALER_TOKEN" us-east-1 nomad-cluster-client-asg 1 5
+```
+
+### 10. Verify artifacts when troubleshooting
+
+```bash
+BUCKET=$(terraform output -raw artifacts_bucket_name)
+aws s3 ls "s3://${BUCKET}/nomad-autoscaler/"
+aws s3 ls "s3://${BUCKET}/scaling-policies/"
 ```
 
 ## Configuration
@@ -130,6 +177,12 @@ terraform apply
 
 **Via autoscaler** (automatic):
 The Nomad Autoscaler monitors cluster CPU/memory allocation and scales the client ASG when usage exceeds 70%.
+
+## Scaling Policies Workflow
+
+1. Add or edit one or more policy files in `scaling-policies/`.
+2. Run `terraform apply` to upload the updated policy zip to S3.
+3. Run `./scripts/deploy-autoscaler.sh ...` to restart the autoscaler and load the updated policies.
 
 ## Nomad UI
 

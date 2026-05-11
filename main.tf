@@ -57,6 +57,14 @@ module "artifacts" {
   client_iam_role_name = module.security.client_iam_role_name
 }
 
+module "scaling_policies" {
+  source = "./modules/scaling-policies"
+
+  project_name          = var.project_name
+  artifacts_bucket_name = module.artifacts.bucket_name
+  policies_dir          = "${path.root}/scaling-policies"
+}
+
 locals {
   nomad_management_token_param = "${var.nomad_token_ssm_prefix}/management-token"
   nomad_operator_token_param   = "${var.nomad_token_ssm_prefix}/operator-token"

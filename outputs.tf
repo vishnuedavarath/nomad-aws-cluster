@@ -29,3 +29,7 @@ output "artifacts_bucket_name" {
 output "autoscaler_binary_url" {
   value = module.artifacts.autoscaler_binary_url
 }
+
+output "scaling_policies_url" {
+  value = module.scaling_policies.policies_s3_url
+}
