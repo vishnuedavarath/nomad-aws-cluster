@@ -36,9 +36,15 @@ BINARY_KEY=$(AWS_PAGER="" aws s3api list-objects-v2 \
   --output text 2>/dev/null || echo "")
 
 if [[ -z "$BINARY_KEY" || "$BINARY_KEY" == "None" ]]; then
-  echo "ERROR: No versioned autoscaler binary found in s3://${BUCKET}/nomad-autoscaler/."
-  echo "Run './scripts/upload-autoscaler.sh' first."
-  exit 1
+  LEGACY_KEY="nomad-autoscaler/nomad-autoscaler.zip"
+  if AWS_PAGER="" aws s3api head-object --bucket "$BUCKET" --key "$LEGACY_KEY" >/dev/null 2>&1; then
+    echo "==> No versioned autoscaler binary found; using legacy key: ${LEGACY_KEY}"
+    BINARY_KEY="$LEGACY_KEY"
+  else
+    echo "ERROR: No autoscaler binary found in s3://${BUCKET}/nomad-autoscaler/."
+    echo "Run './scripts/upload-autoscaler.sh' first."
+    exit 1
+  fi
 fi
 
 BINARY_URL="s3::https://s3.amazonaws.com/${BUCKET}/${BINARY_KEY}"
