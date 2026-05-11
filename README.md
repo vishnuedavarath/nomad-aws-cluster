@@ -108,6 +108,10 @@ Optional:
 ./scripts/upload-autoscaler.sh /path/to/nomad-autoscaler
 ```
 
+The upload script stores binaries under versioned keys like
+`nomad-autoscaler/nomad-autoscaler-<hash>.zip`.
+The deploy script automatically picks the latest uploaded binary.
+
 ### 8. Configure scaling policies and publish changes
 
 Scaling policies live in the `scaling-policies/` directory.
@@ -149,6 +153,13 @@ terraform apply
 BUCKET=$(terraform output -raw artifacts_bucket_name)
 aws s3 ls "s3://${BUCKET}/nomad-autoscaler/"
 aws s3 ls "s3://${BUCKET}/scaling-policies/"
+
+# Show the latest uploaded autoscaler binary key
+AWS_PAGER="" aws s3api list-objects-v2 \
+  --bucket "$BUCKET" \
+  --prefix "nomad-autoscaler/nomad-autoscaler-" \
+  --query 'reverse(sort_by(Contents, &LastModified))[0].Key' \
+  --output text
 ```
 
 ## Configuration

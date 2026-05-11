@@ -2,7 +2,7 @@
 # Upload a nomad-autoscaler binary to S3 artifacts bucket.
 # Usage:
 #   ./scripts/upload-autoscaler.sh                              # downloads latest official release (default)
-#   ./scripts/upload-autoscaler.sh --local                      # uses local build from ~/projects/hashicorp/nomad-autoscaler/.bin
+#   ./scripts/upload-autoscaler.sh --local                      # uses local build from ~/projects/hashicorp/nomad-autoscaler/bin
 #   ./scripts/upload-autoscaler.sh /path/to/nomad-autoscaler    # uses specified binary
 set -euo pipefail
 
@@ -38,7 +38,13 @@ else
     -o "${TMPDIR_CLEAN}/nomad-autoscaler.zip"
 fi
 
-echo "Uploading to s3://${BUCKET}/nomad-autoscaler/nomad-autoscaler.zip ..."
-aws s3 cp "${TMPDIR_CLEAN}/nomad-autoscaler.zip" "s3://${BUCKET}/nomad-autoscaler/nomad-autoscaler.zip"
+ARCHIVE_PATH="${TMPDIR_CLEAN}/nomad-autoscaler.zip"
+ARCHIVE_HASH=$(shasum -a 256 "$ARCHIVE_PATH" | awk '{print $1}')
+ARCHIVE_HASH_SHORT="${ARCHIVE_HASH:0:12}"
+OBJECT_KEY="nomad-autoscaler/nomad-autoscaler-${ARCHIVE_HASH_SHORT}.zip"
 
-echo "Done. Redeploy the autoscaler job to pick up the new binary."
+echo "Uploading to s3://${BUCKET}/${OBJECT_KEY} ..."
+aws s3 cp "$ARCHIVE_PATH" "s3://${BUCKET}/${OBJECT_KEY}"
+
+echo "Done. Uploaded binary key: ${OBJECT_KEY}"
+echo "Redeploy the autoscaler job to pick up the new binary URL."

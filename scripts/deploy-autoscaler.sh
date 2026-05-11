@@ -23,18 +23,33 @@ nomad var put -force nomad/jobs/autoscaler \
   client_asg_name="$CLIENT_ASG_NAME"
 
 echo "==> Deploying autoscaler job..."
-BINARY_URL=$(cd "$REPO_ROOT" && terraform output -raw autoscaler_binary_url 2>/dev/null || echo "")
-POLICIES_URL=$(cd "$REPO_ROOT" && terraform output -raw scaling_policies_url 2>/dev/null || echo "")
-
-if [[ -z "$BINARY_URL" ]]; then
-  echo "ERROR: Could not get S3 URL from terraform output. Run 'terraform apply' first."
+BUCKET=$(cd "$REPO_ROOT" && terraform output -raw artifacts_bucket_name 2>/dev/null || echo "")
+if [[ -z "$BUCKET" ]]; then
+  echo "ERROR: Could not get artifacts bucket name from terraform output. Run 'terraform apply' first."
   exit 1
 fi
+
+BINARY_KEY=$(AWS_PAGER="" aws s3api list-objects-v2 \
+  --bucket "$BUCKET" \
+  --prefix "nomad-autoscaler/nomad-autoscaler-" \
+  --query 'reverse(sort_by(Contents, &LastModified))[0].Key' \
+  --output text 2>/dev/null || echo "")
+
+if [[ -z "$BINARY_KEY" || "$BINARY_KEY" == "None" ]]; then
+  echo "ERROR: No versioned autoscaler binary found in s3://${BUCKET}/nomad-autoscaler/."
+  echo "Run './scripts/upload-autoscaler.sh' first."
+  exit 1
+fi
+
+BINARY_URL="s3::https://s3.amazonaws.com/${BUCKET}/${BINARY_KEY}"
+POLICIES_URL=$(cd "$REPO_ROOT" && terraform output -raw scaling_policies_url 2>/dev/null || echo "")
 
 if [[ -z "$POLICIES_URL" ]]; then
   echo "ERROR: Could not get scaling policies URL from terraform output. Run 'terraform apply' first."
   exit 1
 fi
+
+echo "==> Using autoscaler binary: ${BINARY_KEY}"
 
 nomad job run \
   -var="autoscaler_binary_url=${BINARY_URL}" \
