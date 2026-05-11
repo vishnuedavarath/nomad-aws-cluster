@@ -1,10 +1,10 @@
 scaling "cluster_drain_baseline" {
   enabled = true
-  min     = 1
+  min     = 2
   max     = 6
 
   policy {
-    evaluation_interval = "30s"
+    evaluation_interval = "90s"
     cooldown            = "20s"
 
     check "cpu_allocated" {
