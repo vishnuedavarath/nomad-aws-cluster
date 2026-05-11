@@ -7,24 +7,20 @@ set -euo pipefail
 # Usage:
 #   export NOMAD_ADDR=http://<server-ip>:4646
 #   export NOMAD_TOKEN=<management-token>
-#   ./scripts/deploy-autoscaler.sh <autoscaler-acl-token> <aws-region> <client-asg-name> [min] [max]
+#   ./scripts/deploy-autoscaler.sh <autoscaler-acl-token> <aws-region> <client-asg-name>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-AUTOSCALER_TOKEN="${1:?Usage: $0 <autoscaler-acl-token> <aws-region> <client-asg-name> [min] [max]}"
-AWS_REGION="${2:?Usage: $0 <autoscaler-acl-token> <aws-region> <client-asg-name> [min] [max]}"
-CLIENT_ASG_NAME="${3:?Usage: $0 <autoscaler-acl-token> <aws-region> <client-asg-name> [min] [max]}"
-CLIENT_MIN="${4:-1}"
-CLIENT_MAX="${5:-5}"
+AUTOSCALER_TOKEN="${1:?Usage: $0 <autoscaler-acl-token> <aws-region> <client-asg-name>}"
+AWS_REGION="${2:?Usage: $0 <autoscaler-acl-token> <aws-region> <client-asg-name>}"
+CLIENT_ASG_NAME="${3:?Usage: $0 <autoscaler-acl-token> <aws-region> <client-asg-name>}"
 
 echo "==> Storing autoscaler secrets in Nomad Variables..."
 nomad var put -force nomad/jobs/autoscaler \
   autoscaler_token="$AUTOSCALER_TOKEN" \
   aws_region="$AWS_REGION" \
-  client_asg_name="$CLIENT_ASG_NAME" \
-  client_min="$CLIENT_MIN" \
-  client_max="$CLIENT_MAX"
+  client_asg_name="$CLIENT_ASG_NAME"
 
 echo "==> Deploying autoscaler job..."
 BINARY_URL=$(cd "$REPO_ROOT" && terraform output -raw autoscaler_binary_url 2>/dev/null || echo "")
@@ -51,4 +47,4 @@ nomad job restart autoscaler 2>/dev/null || true
 echo "==> Autoscaler deployed. Check status with:"
 echo "    nomad job status autoscaler"
 echo ""
-echo "    ASG: $CLIENT_ASG_NAME (min=$CLIENT_MIN, max=$CLIENT_MAX)"
+echo "    ASG: $CLIENT_ASG_NAME"

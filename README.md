@@ -133,14 +133,14 @@ AUTOSCALER_TOKEN=$(aws ssm get-parameter --region us-east-1 \
   --name /nomad-cluster/acl/autoscaler-token \
   --with-decryption --query Parameter.Value --output text)
 
-./scripts/deploy-autoscaler.sh "$AUTOSCALER_TOKEN" us-east-1 nomad-cluster-client-asg 1 5
+./scripts/deploy-autoscaler.sh "$AUTOSCALER_TOKEN" us-east-1 nomad-cluster-client-asg
 ```
 
 If you update policies later:
 
 ```bash
 terraform apply
-./scripts/deploy-autoscaler.sh "$AUTOSCALER_TOKEN" us-east-1 nomad-cluster-client-asg 1 5
+./scripts/deploy-autoscaler.sh "$AUTOSCALER_TOKEN" us-east-1 nomad-cluster-client-asg
 ```
 
 ### 10. Verify artifacts when troubleshooting

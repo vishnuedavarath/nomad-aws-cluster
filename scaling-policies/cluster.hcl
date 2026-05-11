@@ -1,7 +1,7 @@
 scaling "cluster_drain_baseline" {
   enabled = true
-  min     = {{ with nomadVar "nomad/jobs/autoscaler" }}{{ .client_min }}{{ end }}
-  max     = {{ with nomadVar "nomad/jobs/autoscaler" }}{{ .client_max }}{{ end }}
+  min     = 1
+  max     = 6
 
   policy {
     evaluation_interval = "10s"
@@ -27,7 +27,7 @@ scaling "cluster_drain_baseline" {
 
     target "aws-asg" {
       dry-run             = "false"
-      aws_asg_name        = "{{ with nomadVar "nomad/jobs/autoscaler" }}{{ .client_asg_name }}{{ end }}"
+      aws_asg_name        = "nomad-cluster-client-asg"
       node_class          = "hashistack"
       node_drain_deadline = "10m"
     }
