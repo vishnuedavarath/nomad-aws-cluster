@@ -6,6 +6,10 @@ output "client_asg_name" {
   value = module.nomad_client.asg_name
 }
 
+output "autoscaler_asg_name" {
+  value = module.autoscaler_client.asg_name
+}
+
 output "vpc_id" {
   value = module.networking.vpc_id
 }

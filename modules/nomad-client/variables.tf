@@ -67,3 +67,15 @@ variable "security_group_id" {
 variable "instance_profile_name" {
   type = string
 }
+
+variable "node_class" {
+  type        = string
+  default     = "worker"
+  description = "Nomad client node_class for scheduling constraints"
+}
+
+variable "name_suffix" {
+  type        = string
+  default     = "client"
+  description = "Suffix for resource names (e.g. client, autoscaler)"
+}

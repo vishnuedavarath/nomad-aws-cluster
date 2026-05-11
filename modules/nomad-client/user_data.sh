@@ -44,7 +44,7 @@ advertise {
 
 client {
   enabled    = true
-  node_class = "hashistack"
+  node_class = "${node_class}"
 
   server_join {
     retry_join = ["provider=aws tag_key=NomadRole tag_value=server region=${region}"]

@@ -37,6 +37,25 @@ module "nomad_client" {
   subnet_ids            = module.networking.public_subnet_ids
   security_group_id     = module.security.client_security_group_id
   instance_profile_name = module.security.client_instance_profile_name
+  node_class            = "worker"
+  name_suffix           = "client"
+}
+
+# Dedicated node for autoscaler — isolated from workload jobs
+module "autoscaler_client" {
+  source = "./modules/nomad-client"
+
+  project_name          = var.project_name
+  region                = var.region
+  client_count          = 1
+  min_clients           = 1
+  max_clients           = 1
+  instance_type         = "t3.small"
+  subnet_ids            = module.networking.public_subnet_ids
+  security_group_id     = module.security.client_security_group_id
+  instance_profile_name = module.security.client_instance_profile_name
+  node_class            = "autoscaler"
+  name_suffix           = "autoscaler"
 }
 
 module "autoscaler" {

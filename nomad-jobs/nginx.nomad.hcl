@@ -2,6 +2,11 @@ job "nginx" {
   datacenters = ["dc1"]
   type        = "service"
 
+  constraint {
+    attribute = "${node.class}"
+    value     = "worker"
+  }
+
   group "web" {
     count = 3
 

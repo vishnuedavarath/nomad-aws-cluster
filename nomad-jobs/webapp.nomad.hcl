@@ -2,6 +2,11 @@ job "webapp" {
   datacenters = ["dc1"]
   type        = "service"
 
+  constraint {
+    attribute = "${node.class}"
+    value     = "worker"
+  }
+
   group "app" {
     count = 2
 

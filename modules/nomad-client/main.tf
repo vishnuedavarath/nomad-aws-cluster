@@ -14,7 +14,7 @@ data "aws_ami" "hc_base_ubuntu" {
 }
 
 resource "aws_launch_template" "client" {
-  name_prefix   = "${var.project_name}-client-"
+  name_prefix   = "${var.project_name}-${var.name_suffix}-"
   image_id      = var.ami_id != "" ? var.ami_id : data.aws_ami.hc_base_ubuntu.id
   instance_type = var.instance_type
 
@@ -27,6 +27,7 @@ resource "aws_launch_template" "client" {
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     region       = var.region
     project_name = var.project_name
+    node_class   = var.node_class
   }))
 
   metadata_options {
@@ -50,8 +51,9 @@ resource "aws_launch_template" "client" {
     resource_type = "instance"
 
     tags = {
-      Name = "${var.project_name}-client"
+      Name = "${var.project_name}-${var.name_suffix}"
       Role = "nomad-client"
+      NodeClass = var.node_class
     }
   }
 
@@ -61,7 +63,7 @@ resource "aws_launch_template" "client" {
 }
 
 resource "aws_autoscaling_group" "client" {
-  name                = "${var.project_name}-client-asg"
+  name                = "${var.project_name}-${var.name_suffix}-asg"
   desired_capacity    = var.client_count
   min_size            = var.min_clients
   max_size            = var.max_clients
@@ -91,7 +93,7 @@ resource "aws_autoscaling_group" "client" {
 
   tag {
     key                 = "Name"
-    value               = "${var.project_name}-client"
+    value               = "${var.project_name}-${var.name_suffix}"
     propagate_at_launch = true
   }
 

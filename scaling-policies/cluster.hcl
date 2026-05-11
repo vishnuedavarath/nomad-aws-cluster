@@ -9,7 +9,7 @@ scaling "cluster_drain_baseline" {
 
     check "cpu_allocated" {
       source = "nomad-apm"
-      query  = "node_percentage-allocated_cpu/hashistack/class"
+      query  = "node_percentage-allocated_cpu/worker/class"
 
       strategy "target-value" {
         target = 70
@@ -18,7 +18,7 @@ scaling "cluster_drain_baseline" {
 
     check "mem_allocated" {
       source = "nomad-apm"
-      query  = "node_percentage-allocated_memory/hashistack/class"
+      query  = "node_percentage-allocated_memory/worker/class"
 
       strategy "target-value" {
         target = 70
@@ -28,7 +28,7 @@ scaling "cluster_drain_baseline" {
     target "aws-asg" {
       dry-run             = "false"
       aws_asg_name        = "nomad-cluster-client-asg"
-      node_class          = "hashistack"
+      node_class          = "worker"
       node_drain_deadline = "10m"
     }
   }

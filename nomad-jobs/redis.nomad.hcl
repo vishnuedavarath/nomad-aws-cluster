@@ -2,6 +2,11 @@ job "redis" {
   datacenters = ["dc1"]
   type        = "service"
 
+  constraint {
+    attribute = "${node.class}"
+    value     = "worker"
+  }
+
   group "cache" {
     count = 1
 

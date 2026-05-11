@@ -12,6 +12,11 @@ job "autoscaler" {
   datacenters = ["dc1"]
   type        = "service"
 
+  constraint {
+    attribute = "${node.class}"
+    value     = "autoscaler"
+  }
+
   group "autoscaler" {
     count = 1
 
