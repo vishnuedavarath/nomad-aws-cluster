@@ -51,8 +51,8 @@ resource "aws_launch_template" "client" {
     resource_type = "instance"
 
     tags = {
-      Name = "${var.project_name}-${var.name_suffix}"
-      Role = "nomad-client"
+      Name      = "${var.project_name}-${var.name_suffix}"
+      Role      = "nomad-client"
       NodeClass = var.node_class
     }
   }
@@ -103,6 +103,8 @@ resource "aws_autoscaling_group" "client" {
     propagate_at_launch = true
   }
 
+  force_delete = true
+
   instance_refresh {
     strategy = "Rolling"
     preferences {
@@ -112,5 +114,6 @@ resource "aws_autoscaling_group" "client" {
 
   lifecycle {
     create_before_destroy = true
+    ignore_changes        = [desired_capacity]
   }
 }

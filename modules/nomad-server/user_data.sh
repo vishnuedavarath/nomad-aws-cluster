@@ -18,7 +18,7 @@ fi
 # Install Nomad
 curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
-apt-get update && apt-get install -y nomad jq
+apt-get update && apt-get install -y nomad consul jq
 
 # Get instance metadata (IMDSv2)
 TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -51,6 +51,10 @@ acl {
   enabled = true
 }
 
+consul {
+  address = "127.0.0.1:8500"
+}
+
 telemetry {
   prometheus_metrics = true
 }
@@ -58,3 +62,27 @@ EOF
 
 systemctl enable nomad
 systemctl start nomad
+
+# Configure Consul server
+cat > /etc/consul.d/consul.hcl <<CONSUL
+datacenter = "dc1"
+data_dir   = "/opt/consul/data"
+bind_addr  = "$PRIVATE_IP"
+
+server           = true
+bootstrap_expect = ${server_count}
+
+retry_join = ["provider=aws tag_key=NomadRole tag_value=server region=${region}"]
+
+ui_config {
+  enabled = true
+}
+
+client_addr    = "0.0.0.0"
+connect {
+  enabled = true
+}
+CONSUL
+
+systemctl enable consul
+systemctl start consul

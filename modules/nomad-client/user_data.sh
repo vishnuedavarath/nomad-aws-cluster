@@ -22,7 +22,7 @@ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list
 
-apt-get update && apt-get install -y nomad docker-ce docker-ce-cli containerd.io jq
+apt-get update && apt-get install -y nomad consul docker-ce docker-ce-cli containerd.io jq
 
 # Get instance metadata (IMDSv2)
 TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -55,6 +55,10 @@ acl {
   enabled = true
 }
 
+consul {
+  address = "127.0.0.1:8500"
+}
+
 plugin "raw_exec" {
   config {
     enabled = true
@@ -74,3 +78,19 @@ EOF
 
 systemctl enable docker nomad
 systemctl start docker nomad
+
+# Configure Consul client
+cat > /etc/consul.d/consul.hcl <<CONSUL
+datacenter = "dc1"
+data_dir   = "/opt/consul/data"
+bind_addr  = "$PRIVATE_IP"
+
+server = false
+
+retry_join = ["provider=aws tag_key=NomadRole tag_value=server region=${region}"]
+
+client_addr = "0.0.0.0"
+CONSUL
+
+systemctl enable consul
+systemctl start consul

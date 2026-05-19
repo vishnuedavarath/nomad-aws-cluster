@@ -41,6 +41,31 @@ resource "aws_security_group" "nomad_server" {
     description = "Nomad HTTP API"
   }
 
+  # Consul ports
+  ingress {
+    from_port   = 8300
+    to_port     = 8302
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Consul server RPC and Serf"
+  }
+
+  ingress {
+    from_port   = 8301
+    to_port     = 8302
+    protocol    = "udp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Consul Serf UDP"
+  }
+
+  ingress {
+    from_port   = 8500
+    to_port     = 8500
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Consul HTTP API"
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -62,6 +87,24 @@ resource "aws_security_group" "nomad_client" {
   name_prefix = "${var.project_name}-client-"
   vpc_id      = var.vpc_id
   description = "Nomad client security group"
+
+  # Allow all traffic between client nodes (Prometheus, Docker networking, etc.)
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+    description = "All traffic between clients"
+  }
+
+  # Nomad HTTP API (from VPC - servers and other clients)
+  ingress {
+    from_port   = 4646
+    to_port     = 4646
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Nomad HTTP API"
+  }
 
   # Nomad client RPC from servers
   ingress {
@@ -97,6 +140,31 @@ resource "aws_security_group" "nomad_client" {
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
     description = "Nomad dynamic ports"
+  }
+
+  # Consul ports
+  ingress {
+    from_port   = 8300
+    to_port     = 8302
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Consul server RPC and Serf"
+  }
+
+  ingress {
+    from_port   = 8301
+    to_port     = 8302
+    protocol    = "udp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Consul Serf UDP"
+  }
+
+  ingress {
+    from_port   = 8500
+    to_port     = 8500
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Consul HTTP API"
   }
 
   egress {

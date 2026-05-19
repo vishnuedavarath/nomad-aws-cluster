@@ -8,6 +8,14 @@ variable "scaling_policies_url" {
   description = "S3 URL to the scaling policies zip."
 }
 
+# Namespaces to monitor for inline scaling policies (nomad policy source).
+# Supports single string (legacy) or list: ["ns1", "ns2"] or ["*"] for all.
+# Defaults to ["default"] — only the default namespace.
+variable "nomad_namespaces" {
+  type    = list(string)
+  default = ["default"]
+}
+
 job "autoscaler" {
   datacenters = ["dc1"]
   type        = "service"
@@ -60,8 +68,9 @@ job "autoscaler" {
       template {
         data        = <<-EOF
           nomad {
-            address = "http://{{env "attr.unique.network.ip-address"}}:4646"
-            token   = "{{ with nomadVar "nomad/jobs/autoscaler" }}{{ .autoscaler_token }}{{ end }}"
+            address   = "http://{{env "attr.unique.network.ip-address"}}:4646"
+            token     = "{{ with nomadVar "nomad/jobs/autoscaler" }}{{ .autoscaler_token }}{{ end }}"
+            namespace = ${jsonencode(var.nomad_namespaces)}
           }
 
           telemetry {
@@ -72,8 +81,19 @@ job "autoscaler" {
             driver = "nomad-apm"
           }
 
+          apm "prometheus" {
+            driver = "prometheus"
+            config = {
+              address = "http://{{ range nomadService "prometheus" }}{{ .Address }}:{{ .Port }}{{ end }}"
+            }
+          }
+
           strategy "target-value" {
             driver = "target-value"
+          }
+
+          strategy "threshold" {
+            driver = "threshold"
           }
 
           target "aws-asg" {

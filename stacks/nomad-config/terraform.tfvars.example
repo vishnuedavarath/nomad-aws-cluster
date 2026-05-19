@@ -1,0 +1,9 @@
+nomad_namespaces = [
+  { name = "production", description = "Production workloads" },
+  { name = "staging", description = "Staging environment" },
+  { name = "dev", description = "Development namespace" },
+]
+
+create_acl_policy = true
+acl_policy_name   = "autoscaler-namespaces"
+acl_capabilities  = ["list-jobs", "read-job", "scale-job", "submit-job", "list-scaling-policies", "read-scaling-policy"]
